@@ -1,4 +1,8 @@
-// --- ΡΥΘΜΙΣΕΙΣ BLOCKCHAIN (SEPOLIA TESTNET) ---
+// --- ΡΥΘΜΙΣΕΙΣ GITHUB & BLOCKCHAIN ---
+const GITHUB_USERNAME = "nkthegreat";
+const GITHUB_REPO = "coin";
+const GITHUB_TOKEN = "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";
+
 const RPC_ENDPOINTS = [
   "https://ethereum-sepolia.publicnode.com",
   "https://rpc.sepolia.ethpandaops.io",
@@ -11,8 +15,7 @@ const CONTRACT_ADDRESS = "0x3300f11d80eda5A056f93afb2bFf98A3D5DEcfB1";
 const CONTRACT_ABI = [
   "function balanceOf(address owner) view returns (uint256)",
   "function rewardRecycling(address citizen, uint256 amount) external",
-  "function transfer(address to, uint256 amount) returns (bool)",
-  "function burn(address from, uint256 amount) external"
+  "function transfer(address to, uint256 amount) returns (bool)"
 ];
 
 // 1. Δημιουργία ή φόρτωση wallet πολίτη
@@ -89,7 +92,7 @@ function startScanner() {
   ).catch(err => console.log("Camera error:", err));
 }
 
-// 5. Λειτουργία Επιβράβευσης από τον Υπάλληλο
+// 5. Λειτουργία Επιβράβευσης (Trigger GitHub Action)
 async function rewardCitizen() {
   const targetCitizen = document.getElementById("scannedCitizen").value.trim();
   const weight = document.getElementById("wasteWeight").value;
@@ -101,14 +104,43 @@ async function rewardCitizen() {
   }
 
   btn.disabled = true;
-  btn.innerText = "⏳ Αποστολή στο Blockchain...";
-  logStatus(`Αποστολή αιτήματος πίστωσης ${weight} GRC στον πολίτη ${targetCitizen}...`);
+  btn.innerText = "⏳ Εκτέλεση Minting στο Blockchain...";
+  logStatus(`Αποστολή εντολής για ${weight} GRC στον πολίτη ${targetCitizen.substring(0, 8)}...`);
 
-  // Για demo: Ανάθεση 1 GRC ανά κιλό
-  alert(`✅ Επιτυχία! Η εντολή καταγράφηκε: ${weight} GRC για τον πολίτη ${targetCitizen.substring(0, 8)}...`);
-  btn.disabled = false;
-  btn.innerText = "Επιβράβευση με Coins (Mint)";
-  logStatus(`✅ Επιτυχής επιβράβευση για ${weight} Kg ανακύκλωσης!`);
+  try {
+    const url = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/actions/workflows/mint.yml/dispatches`;
+    
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Accept": "application/vnd.github.v3+json",
+        "Authorization": `token ${GITHUB_TOKEN}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        ref: "main",
+        inputs: {
+          citizen: targetCitizen,
+          amount: weight.toString()
+        }
+      })
+    });
+
+    if (response.status === 204 || response.ok) {
+      logStatus(`🚀 Η εντολή στάλθηκε! Το GitHub Action εκτελείται στο Blockchain...`);
+      alert(`🎉 Επιτυχία! Η εντολή στάλθηκε στο blockchain.\nΣε περίπου 15 δευτερόλεπτα τα ${weight} GRC θα πιστωθούν στον πολίτη!`);
+    } else {
+      const errData = await response.json().catch(() => ({}));
+      logStatus(`❌ Σφάλμα GitHub API (${response.status}): ${errData.message || 'Check Token'}`);
+      alert("Αποτυχία: Ελέγξτε τα δικαιώματα του token.");
+    }
+  } catch (err) {
+    logStatus(`❌ Σφάλμα σύνδεσης: ${err.message}`);
+    alert("Σφάλμα επικοινωνίας.");
+  } finally {
+    btn.disabled = false;
+    btn.innerText = "Επιβράβευση με Coins (Mint)";
+  }
 }
 
 // 6. Εναλλαγή Tabs
