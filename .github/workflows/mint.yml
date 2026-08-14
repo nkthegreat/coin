@@ -1,0 +1,24 @@
+name: Reward Citizen (Mint GRC)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  mint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Dependencies
+        run: npm install ethers
+
+      - name: Execute Minting
+        env:
+          ADMIN_PRIVATE_KEY: ${{ secrets.ADMIN_PRIVATE_KEY }}
+        run: node mint.js
