@@ -1,35 +1,35 @@
-const { ethers } = require("ethers");
+name: Reward Citizen (Mint GRC)
 
-const RPC_URL = "https://ethereum-sepolia-rpc.publicnode.com";
-const CONTRACT_ADDRESS = "0x3300f11d80eda5A056f93afb2bFf98A3D5DEcfB1";
-const PRIVATE_KEY = process.env.ADMIN_PRIVATE_KEY;
+on:
+  workflow_dispatch:
+    inputs:
+      citizen:
+        description: 'Citizen Wallet Address'
+        required: true
+        default: '0x9afE7A2CA26f9623c8af16d2eB3D15AC3E4Da3cc'
+      amount:
+        description: 'Amount of GRC (Waste in Kg)'
+        required: true
+        default: '5'
 
-// Διεύθυνση του Πολίτη (αυτή που σου έβγαλε η οθόνη)
-const CITIZEN_ADDRESS = "0x02f92abad9F3bC0305BCe712bab26c26E19A36b1";
-const AMOUNT_TO_MINT = "5.0"; // 5 Green Coins
+jobs:
+  mint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-const ABI = [
-  "function rewardRecycling(address citizen, uint256 amount) external"
-];
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
 
-async function main() {
-  const provider = new ethers.JsonRpcProvider(RPC_URL);
-  const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
-  const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, wallet);
+      - name: Install Dependencies
+        run: npm install ethers
 
-  console.log(`Πίστωση ${AMOUNT_TO_MINT} GRC στον πολίτη: ${CITIZEN_ADDRESS}...`);
-  
-  const tx = await contract.rewardRecycling(
-    CITIZEN_ADDRESS, 
-    ethers.parseEther(AMOUNT_TO_MINT)
-  );
-
-  console.log("Αναμονή επιβεβαίωσης στο blockchain (Sepolia)...");
-  await tx.wait();
-
-  console.log("🎉 ΕΠΙΤΥΧΙΑ!");
-  console.log("Tx Hash:", tx.hash);
-  console.log(`Δες τη συναλλαγή: https://sepolia.etherscan.io/tx/${tx.hash}`);
-}
-
-main().catch(console.error);
+      - name: Run Mint Script
+        env:
+          ADMIN_PRIVATE_KEY: ${{ secrets.ADMIN_PRIVATE_KEY }}
+          CITIZEN_ADDRESS: ${{ github.event.inputs.citizen }}
+          MINT_AMOUNT: ${{ github.event.inputs.amount }}
+        run: node mint.js
