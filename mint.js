@@ -5,7 +5,7 @@ const CONTRACT_ADDRESS = "0x3300f11d80eda5A056f93afb2bFf98A3D5DEcfB1";
 const PRIVATE_KEY = process.env.ADMIN_PRIVATE_KEY;
 
 // Διεύθυνση του Πολίτη (αυτή που σου έβγαλε η οθόνη)
-const CITIZEN_ADDRESS = "0x9afE7A2CA26f9623c8af16d2eB3D15AC3E4Da3cc";
+const CITIZEN_ADDRESS = "0x02f92abad9F3bC0305BCe712bab26c26E19A36b1";
 const AMOUNT_TO_MINT = "5.0"; // 5 Green Coins
 
 const ABI = [
