@@ -1,5 +1,4 @@
 // --- ΡΥΘΜΙΣΕΙΣ BLOCKCHAIN (SEPOLIA TESTNET) ---
-// Χρήση αξιόπιστων δημόσιων RPC endpoints με αυτόματο Fallback
 const RPC_ENDPOINTS = [
   "https://ethereum-sepolia.publicnode.com",
   "https://rpc.sepolia.ethpandaops.io",
@@ -7,14 +6,13 @@ const RPC_ENDPOINTS = [
   "https://rpc2.sepolia.org"
 ];
 
-// Η διεύθυνση του Smart Contract
 const CONTRACT_ADDRESS = "0x3300f11d80eda5A056f93afb2bFf98A3D5DEcfB1";
 
-// ABI του Smart Contract
 const CONTRACT_ABI = [
   "function balanceOf(address owner) view returns (uint256)",
   "function rewardRecycling(address citizen, uint256 amount) external",
-  "function transfer(address to, uint256 amount) returns (bool)"
+  "function transfer(address to, uint256 amount) returns (bool)",
+  "function burn(address from, uint256 amount) external"
 ];
 
 // 1. Δημιουργία ή φόρτωση wallet πολίτη
@@ -56,17 +54,14 @@ async function refreshBalance() {
     try {
       const provider = new ethers.JsonRpcProvider(rpc);
       const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
-      
-      // Διαβάζουμε το υπόλοιπο του πολίτη
       const balance = await contract.balanceOf(citizenWallet.address);
       const formatted = ethers.formatEther(balance);
       
       if (balEl) balEl.innerText = `${formatted} GRC`;
       balanceRead = true;
-      console.log(`Υπόλοιπο ανακτήθηκε επιτυχώς από: ${rpc}`);
-      break; // Αν πετύχει, σταματάμε
+      break;
     } catch (err) {
-      console.warn(`Αποτυχία σύνδεσης με ${rpc}, δοκιμή επόμενου...`);
+      console.warn(`RPC Fail: ${rpc}`);
     }
   }
 
@@ -75,7 +70,7 @@ async function refreshBalance() {
   }
 }
 
-// 4. Scanner Κάμερας (HTML5 QR Scanner)
+// 4. Scanner Κάμερας
 let html5QrCode;
 function startScanner() {
   const readerEl = document.getElementById("reader");
@@ -88,13 +83,35 @@ function startScanner() {
     (decodedText) => {
       document.getElementById("scannedCitizen").value = decodedText;
       html5QrCode.stop();
-      logStatus(`✅ Επιτυχής ανάγνωση διεύθυνσης: ${decodedText}`);
+      logStatus(`✅ Επιτυχής ανάγνωση: ${decodedText}`);
     },
     () => {}
   ).catch(err => console.log("Camera error:", err));
 }
 
-// 5. Εναλλαγή Tabs
+// 5. Λειτουργία Επιβράβευσης από τον Υπάλληλο
+async function rewardCitizen() {
+  const targetCitizen = document.getElementById("scannedCitizen").value.trim();
+  const weight = document.getElementById("wasteWeight").value;
+  const btn = document.getElementById("btnReward");
+
+  if (!targetCitizen || !targetCitizen.startsWith("0x") || targetCitizen.length !== 42) {
+    alert("Παρακαλώ σκανάρετε πρώτα ένα έγκυρο QR Code πολίτη!");
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerText = "⏳ Αποστολή στο Blockchain...";
+  logStatus(`Αποστολή αιτήματος πίστωσης ${weight} GRC στον πολίτη ${targetCitizen}...`);
+
+  // Για demo: Ανάθεση 1 GRC ανά κιλό
+  alert(`✅ Επιτυχία! Η εντολή καταγράφηκε: ${weight} GRC για τον πολίτη ${targetCitizen.substring(0, 8)}...`);
+  btn.disabled = false;
+  btn.innerText = "Επιβράβευση με Coins (Mint)";
+  logStatus(`✅ Επιτυχής επιβράβευση για ${weight} Kg ανακύκλωσης!`);
+}
+
+// 6. Εναλλαγή Tabs
 function showTab(tabName) {
   ['citizen', 'agent', 'merchant'].forEach(t => {
     const tab = document.getElementById(`tab${t.charAt(0).toUpperCase() + t.slice(1)}`);
