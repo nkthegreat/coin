@@ -10,8 +10,7 @@ const RPC_ENDPOINTS = [
   "https://rpc2.sepolia.org"
 ];
 
-const CONTRACT_ADDRESS = "0x3300f11d80eda5A056f93afb2bFf98A3D5DEcfB1";
-
+const CONTRACT_ADDRESS = "0x20C43f2926198C9889878425474973F316d077c2";
 const CONTRACT_ABI = [
   "function balanceOf(address owner) view returns (uint256)",
   "function rewardRecycling(address citizen, uint256 amount) external",
