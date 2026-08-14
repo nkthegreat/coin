@@ -1,7 +1,11 @@
 name: Deploy Smart Contract
 
 on:
-  workflow_dispatch: # Επιτρέπει χειροκίνητη εκτέλεση με κουμπί
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  id-token: write
 
 jobs:
   deploy:
