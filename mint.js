@@ -1,35 +1,36 @@
-name: Reward Citizen (Mint GRC)
+const { ethers } = require("ethers");
 
-on:
-  workflow_dispatch:
-    inputs:
-      citizen:
-        description: 'Citizen Wallet Address'
-        required: true
-        default: '0x9afE7A2CA26f9623c8af16d2eB3D15AC3E4Da3cc'
-      amount:
-        description: 'Amount of GRC (Waste in Kg)'
-        required: true
-        default: '5'
+async function main() {
+  const RPC_URL = "https://ethereum-sepolia.publicnode.com"; // ή Base Sepolia
+  const CONTRACT_ADDRESS = "0x20C43f2926198C9889878425474973F316d077c2"; // Το νέο σου address
 
-jobs:
-  mint:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+  const privateKey = process.env.ADMIN_PRIVATE_KEY;
+  const citizenAddress = process.env.CITIZEN_ADDRESS;
+  const amountToMint = process.env.AMOUNT;
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
+  if (!citizenAddress || !amountToMint) {
+    throw new Error("Λείπουν οι παράμετροι citizen ή amount!");
+  }
 
-      - name: Install Dependencies
-        run: npm install ethers
+  const provider = new ethers.JsonRpcProvider(RPC_URL);
+  const wallet = new ethers.Wallet(privateKey, provider);
 
-      - name: Run Mint Script
-        env:
-          ADMIN_PRIVATE_KEY: ${{ secrets.ADMIN_PRIVATE_KEY }}
-          CITIZEN_ADDRESS: ${{ github.event.inputs.citizen }}
-          MINT_AMOUNT: ${{ github.event.inputs.amount }}
-        run: node mint.js
+  const abi = [
+    "function rewardRecycling(address citizen, uint256 amount) external"
+  ];
+  const contract = new ethers.Contract(CONTRACT_ADDRESS, abi, wallet);
+
+  console.log(`Πίστωση ${amountToMint} GRC στον πολίτη: ${citizenAddress}`);
+
+  const amountWei = ethers.parseEther(amountToMint);
+  const tx = await contract.rewardRecycling(citizenAddress, amountWei);
+  console.log("Tx sent, Hash:", tx.hash);
+
+  await tx.wait();
+  console.log("✅ Minting ολοκληρώθηκε επιτυχώς!");
+}
+
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});
