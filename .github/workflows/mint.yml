@@ -6,9 +6,11 @@ on:
       citizen:
         description: 'Citizen Wallet Address'
         required: true
+        default: '0x79cC13c58a68ae46734c9988295569E996a9fC81'
       amount:
         description: 'Amount of GRC'
         required: true
+        default: '5'
 
 jobs:
   mint:
