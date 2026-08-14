@@ -1,7 +1,7 @@
 // --- ΡΥΘΜΙΣΕΙΣ GITHUB & BLOCKCHAIN ---
 const GITHUB_USERNAME = "nkthegreat";
 const GITHUB_REPO = "coin";
-const GITHUB_TOKEN = "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";
+const GITHUB_TOKEN = "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";
 
 const RPC_ENDPOINTS = [
   "https://ethereum-sepolia.publicnode.com",
