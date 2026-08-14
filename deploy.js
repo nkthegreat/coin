@@ -3,7 +3,7 @@ const solc = require("solc");
 const fs = require("fs");
 const path = require("path");
 
-const RPC_URL = "https://sepolia.base.org";
+const RPC_URL = "https://ethereum-sepolia-rpc.publicnode.com";
 const PRIVATE_KEY = process.env.ADMIN_PRIVATE_KEY;
 
 if (!PRIVATE_KEY) {
