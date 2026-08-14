@@ -2,6 +2,13 @@ name: Reward Citizen (Mint GRC)
 
 on:
   workflow_dispatch:
+    inputs:
+      citizen:
+        description: 'Citizen Wallet Address'
+        required: true
+      amount:
+        description: 'Amount of GRC'
+        required: true
 
 jobs:
   mint:
@@ -21,4 +28,6 @@ jobs:
       - name: Execute Minting
         env:
           ADMIN_PRIVATE_KEY: ${{ secrets.ADMIN_PRIVATE_KEY }}
+          CITIZEN_ADDRESS: ${{ github.event.inputs.citizen }}
+          AMOUNT: ${{ github.event.inputs.amount }}
         run: node mint.js
