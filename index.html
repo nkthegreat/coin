@@ -19,9 +19,14 @@
   <div class="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden mt-4 mb-8">
     
     <!-- Header -->
-    <div class="bg-green-700 text-white p-5 text-center">
+    <div class="bg-green-700 text-white p-5 text-center relative">
       <h1 class="text-2xl font-bold tracking-wide">🌿 Green Coin (GRC)</h1>
       <p class="text-green-100 text-xs mt-1">Ethereum Sepolia Instant Pay</p>
+      
+      <!-- Κουμπί Reset/Αλλαγή Wallet -->
+      <button onclick="resetWallet()" title="Δημιουργία Νέου Πορτοφολιού" class="absolute top-4 right-4 text-xs bg-green-800 hover:bg-green-900 px-2.5 py-1 rounded-lg border border-green-600 transition">
+        🔑 Νέο Wallet
+      </button>
     </div>
 
     <!-- Navigation Tabs -->
@@ -50,7 +55,7 @@
 
       <!-- Citizen Wallet Info -->
       <div class="text-center space-y-1">
-        <span class="text-xs text-gray-500 font-medium">Η Διεύθυνσή σας (Citizen Wallet):</span>
+        <span class="text-xs text-gray-500 font-medium">Η Διεύθυνσή σας (Wallet):</span>
         <p id="citizenAddress" class="text-xs font-mono bg-gray-100 p-2 rounded break-all border border-gray-200 text-gray-700 select-all"></p>
       </div>
 
@@ -73,9 +78,21 @@
 
     <!-- TAB 2: ΕΜΠΟΡΟΣ -->
     <div id="tabMerchant" class="p-6 space-y-6 hidden">
+      
+      <!-- Balance Card στον Έμπορο -->
+      <div class="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
+        <span class="text-xs text-green-800 uppercase font-semibold tracking-wider">Υπόλοιπο Ταμείου</span>
+        <div id="merchantBalance" class="text-3xl font-extrabold text-green-800 my-1">
+          Φόρτωση...
+        </div>
+        <button onclick="refreshBalance()" class="text-xs text-green-600 hover:text-green-800 underline font-medium mt-1">
+          🔄 Ανανέωση
+        </button>
+      </div>
+
       <div class="text-center space-y-3">
         <!-- Merchant Wallet Address -->
-        <span class="text-xs text-gray-500 font-medium">Διεύθυνση Εμπόρου:</span>
+        <span class="text-xs text-gray-500 font-medium">Διεύθυνση Είσπραξης:</span>
         <p id="merchantAddress" class="text-xs font-mono bg-gray-100 p-2 rounded break-all border border-gray-200 text-gray-700 select-all"></p>
 
         <!-- QR Code -->
