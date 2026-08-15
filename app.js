@@ -4,7 +4,7 @@ const GITHUB_REPO = "coin";
 const GITHUB_TOKEN = "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";
 
 // Διεύθυνση Smart Contract
-const CONTRACT_ADDRESS = "0x2Cf9Ba822670EC6c4b2AA04D871ceB9026aa6EB3";
+const CONTRACT_ADDRESS = "0x59DdAD0414fc513524b1d15871F744C9987A855E";
 
 // Fallback RPCs (Sepolia πρώτα)
 const RPC_ENDPOINTS = [
