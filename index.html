@@ -4,9 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Green Coins - Municipal Recycling Demo</title>
-  <!-- Tailwind CSS για γρήγορο styling -->
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Ethers.js & QR Code Libraries -->
+  <!-- Ethers.js & QR Libraries -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -16,31 +16,48 @@
   <div class="max-w-md w-full bg-white rounded-2xl shadow-lg p-6 space-y-6">
     <div class="text-center">
       <h1 class="text-2xl font-bold text-green-700">🌱 Municipal Green Coins</h1>
-      <p class="text-xs text-gray-500">Base Sepolia Public Testnet (0 Gas Cost)</p>
+      <p class="text-xs text-gray-500">Base Sepolia Public Testnet</p>
     </div>
 
-    <!-- Tab Buttons -->
+    <!-- Tabs Navigation -->
     <div class="flex border-b border-gray-200">
-      <button id="tabCitizenBtn" onclick="showTab('citizen')" class="flex-1 py-2 font-semibold text-green-700 border-b-2 border-green-700">Πολίτης (QR)</button>
-      <button id="tabAgentBtn" onclick="showTab('agent')" class="flex-1 py-2 font-semibold text-gray-500">Υπάλληλος (Scan)</button>
+      <button id="tabCitizenBtn" onclick="showTab('citizen')" class="flex-1 py-2 font-semibold text-green-700 border-b-2 border-green-700">Πολίτης</button>
+      <button id="tabAgentBtn" onclick="showTab('agent')" class="flex-1 py-2 font-semibold text-gray-500">Υπάλληλος</button>
       <button id="tabMerchantBtn" onclick="showTab('merchant')" class="flex-1 py-2 font-semibold text-gray-500">Έμπορος</button>
     </div>
 
-    <!-- 1. TAB: ΠΟΛΙΤΗΣ (Προβολή QR Wallet) -->
+    <!-- 1. TAB: ΠΟΛΙΤΗΣ -->
     <div id="tabCitizen" class="space-y-4">
       <div class="text-center">
         <p class="text-sm text-gray-600 mb-2 font-medium">Το QR Wallet σας:</p>
         <div id="qrcode" class="flex justify-center p-2 bg-gray-50 rounded-lg"></div>
         <p id="citizenAddress" class="text-xs text-gray-400 font-mono mt-2 break-all"></p>
       </div>
+
       <div class="bg-green-50 p-4 rounded-xl text-center">
         <span class="text-sm text-gray-600">Υπόλοιπο Green Coins:</span>
         <h2 id="citizenBalance" class="text-3xl font-extrabold text-green-700 mt-1">-- GRC</h2>
-        <button onclick="refreshBalance()" class="mt-2 text-xs text-green-600 underline">Ανανέωση Υπολοίπου</button>
+        <button onclick="refreshBalance()" class="mt-2 text-xs text-green-600 font-semibold underline">🔄 Ανανέωση Υπολοίπου</button>
+      </div>
+
+      <!-- Αποστολή / Πληρωμή προς άλλο πολίτη ή έμπορο -->
+      <div class="border-t pt-4 space-y-3">
+        <p class="text-xs font-bold text-gray-700 uppercase tracking-wide">Πληρωμή σε Έμπορο / Μεταφορά</p>
+        <div>
+          <label class="text-xs text-gray-600">Διεύθυνση Παραλήπτη (0x...):</label>
+          <input id="transferRecipient" type="text" placeholder="0x..." class="w-full p-2 border rounded-lg text-xs font-mono">
+        </div>
+        <div>
+          <label class="text-xs text-gray-600">Ποσό σε GRC:</label>
+          <input id="transferAmount" type="number" step="0.1" value="1" class="w-full p-2 border rounded-lg text-sm">
+        </div>
+        <button onclick="sendTransfer()" id="btnTransfer" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-lg text-sm transition">
+          💸 Αποστολή GRC
+        </button>
       </div>
     </div>
 
-    <!-- 2. TAB: ΥΠΑΛΛΗΛΟΣ (Scanner & Minting) -->
+    <!-- 2. TAB: ΥΠΑΛΛΗΛΟΣ (Minting) -->
     <div id="tabAgent" class="space-y-4 hidden">
       <div class="text-center">
         <p class="text-sm text-gray-600 mb-2">Σκανάρετε το QR του Πολίτη:</p>
@@ -53,30 +70,28 @@
       </div>
 
       <div class="space-y-2">
-        <label class="text-xs font-semibold text-gray-600">Βάρος Ανακύκλωσης (Kg):</label>
+        <label class="text-xs font-semibold text-gray-600">Βάρος Ανακύκλωσης (Kg = Coins):</label>
         <input id="wasteWeight" type="number" value="5" class="w-full p-2 border rounded-lg text-sm">
       </div>
 
       <button onclick="rewardCitizen()" id="btnReward" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg text-sm transition">
-        Επιβράβευση με Coins (Mint)
+        🌱 Επιβράβευση με Coins (Mint)
       </button>
     </div>
 
-    <!-- 3. TAB: ΕΜΠΟΡΟΣ (Είσπραξη Coins) -->
+    <!-- 3. TAB: ΕΜΠΟΡΟΣ -->
     <div id="tabMerchant" class="space-y-4 hidden">
+      <div class="text-center">
+        <p class="text-sm text-gray-600 mb-2 font-medium">QR Είσπραξης Καταστήματος:</p>
+        <div id="merchantQrcode" class="flex justify-center p-2 bg-yellow-50 rounded-lg"></div>
+        <p id="merchantAddress" class="text-xs text-gray-400 font-mono mt-2 break-all"></p>
+      </div>
       <div class="p-3 bg-yellow-50 rounded-lg text-xs text-yellow-800">
-        Ο έμπορος σκανάρει το QR του πολίτη για να εισπράξει GRC έναντι προϊόντων.
+        💡 Δείξτε αυτό το QR στον πολίτη για να σας στείλει τα Green Coins της αγοράς.
       </div>
-      <div class="space-y-2">
-        <label class="text-xs font-semibold text-gray-600">Ποσό Αγοράς σε GRC:</label>
-        <input id="payAmount" type="number" value="2" class="w-full p-2 border rounded-lg text-sm">
-      </div>
-      <button onclick="collectPayment()" class="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 rounded-lg text-sm transition">
-        Είσπραξη από Πολίτη
-      </button>
     </div>
 
-    <!-- Log Console / Feedback -->
+    <!-- Status Box -->
     <div id="statusBox" class="p-3 bg-gray-50 border rounded-lg text-xs font-mono text-gray-700 break-all hidden"></div>
   </div>
 
