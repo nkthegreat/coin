@@ -8,17 +8,15 @@ const GITHUB_USERNAME = "nkthegreat";
 const GITHUB_REPO = "coin";
 const GITHUB_TOKEN = "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";
 
-// Το ενεργό Smart Contract στο Ethereum Sepolia
+// Συμβόλαιο στο Ethereum Sepolia (ήδη ενεργό με 5 GRC)
 const CONTRACT_ADDRESS = "0x59DdAD0414fc513524b1d15871F744C9987A855E";
 
-// Ethereum Sepolia RPC Endpoints
+// RPCs του Ethereum Sepolia
 const RPC_ENDPOINTS = [
   "https://ethereum-sepolia-rpc.publicnode.com",
   "https://rpc.sepolia.org",
-  "https://1rpc.io/sepolia",
-  "https://gateway.tenderly.co/public/sepolia"
+  "https://1rpc.io/sepolia"
 ];
-
 const CONTRACT_ABI = [
   "function balanceOf(address owner) view returns (uint256)",
   "function rewardRecycling(address citizen, uint256 amount) external",
