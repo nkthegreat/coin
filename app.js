@@ -1,22 +1,24 @@
 // ==========================================
 // 1. ΡΥΘΜΙΣΕΙΣ GITHUB & BLOCKCHAIN (BASE SEPOLIA)
 // ==========================================
+// ==========================================
+// 1. ΡΥΘΜΙΣΕΙΣ GITHUB & BLOCKCHAIN (ETHEREUM SEPOLIA)
+// ==========================================
 const GITHUB_USERNAME = "nkthegreat";
 const GITHUB_REPO = "coin";
 const GITHUB_TOKEN = "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";
 
-// Το ενεργό Smart Contract στο Base Sepolia
+// Το ενεργό Smart Contract στο Ethereum Sepolia
 const CONTRACT_ADDRESS = "0x59DdAD0414fc513524b1d15871F744C9987A855E";
 
-// Λίστα Base Sepolia RPCs με σειρά προτεραιότητας
+// Ethereum Sepolia RPC Endpoints
 const RPC_ENDPOINTS = [
-  "https://sepolia.base.org",
-  "https://base-sepolia-rpc.publicnode.com",
-  "https://base-sepolia.blockpi.network/v1/rpc/public",
-  "https://1rpc.io/base-sepolia"
+  "https://ethereum-sepolia-rpc.publicnode.com",
+  "https://rpc.sepolia.org",
+  "https://1rpc.io/sepolia",
+  "https://gateway.tenderly.co/public/sepolia"
 ];
 
-// ABI Συμβολαίου ERC-20
 const CONTRACT_ABI = [
   "function balanceOf(address owner) view returns (uint256)",
   "function rewardRecycling(address citizen, uint256 amount) external",
