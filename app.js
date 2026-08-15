@@ -6,10 +6,11 @@ const GITHUB_TOKEN = "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";
 // Διεύθυνση Smart Contract στο Base Sepolia
 const CONTRACT_ADDRESS = "0x59DdAD0414fc513524b1d15871F744C9987A855E";
 
-// Base Sepolia Endpoints
+// Σταθερά & Αξιόπιστα Base Sepolia RPC Endpoints
 const RPC_ENDPOINTS = [
-  "https://sepolia.base.org",
   "https://base-sepolia-rpc.publicnode.com",
+  "https://sepolia.base.org",
+  "https://base-sepolia.blockpi.network/v1/rpc/public",
   "https://1rpc.io/base-sepolia"
 ];
 
@@ -89,15 +90,13 @@ async function refreshBalance() {
       const provider = new ethers.JsonRpcProvider(rpc);
       const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
       
-      const balancePromise = contract.balanceOf(citizenWallet.address);
-      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 3500));
-      
-      const balance = await Promise.race([balancePromise, timeoutPromise]);
+      // Απευθείας ανάγνωση υπολοίπου
+      const balance = await contract.balanceOf(citizenWallet.address);
       const formatted = ethers.formatEther(balance);
       
       if (balEl) balEl.innerText = `${parseFloat(formatted).toFixed(2)} GRC`;
       balanceFound = true;
-      console.log(`✅ Balance: ${formatted} GRC (μέσω ${rpc})`);
+      console.log(`✅ Επιτυχία! Υπόλοιπο: ${formatted} GRC (από ${rpc})`);
       break;
     } catch (err) {
       console.warn(`RPC Fail [${rpc}]:`, err.message);
