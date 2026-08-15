@@ -6,13 +6,13 @@ const GITHUB_TOKEN = "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";
 // Διεύθυνση Smart Contract
 const CONTRACT_ADDRESS = "0x20C43f2926198C9889878425474973F316d077c2";
 
-// Αξιόπιστα Fallback RPCs
+// Fallback RPCs (Sepolia πρώτα)
 const RPC_ENDPOINTS = [
-  "https://sepolia.base.org",
-  "https://base-sepolia-rpc.publicnode.com",
   "https://ethereum-sepolia-rpc.publicnode.com",
   "https://1rpc.io/sepolia",
-  "https://gateway.tenderly.co/public/sepolia"
+  "https://gateway.tenderly.co/public/sepolia",
+  "https://rpc.sepolia.org",
+  "https://sepolia.base.org"
 ];
 
 const CONTRACT_ABI = [
@@ -54,7 +54,7 @@ document.addEventListener("DOMContentLoaded", () => {
   refreshBalance();
 });
 
-// 3. Ανάγνωση Υπολοίπου (με Fallback RPCs)
+// 3. Ανάγνωση Υπολοίπου
 async function refreshBalance() {
   const balEl = document.getElementById("citizenBalance");
   if (balEl) balEl.innerText = "Φόρτωση...";
@@ -72,13 +72,14 @@ async function refreshBalance() {
       const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
       
       const balancePromise = contract.balanceOf(citizenWallet.address);
-      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 3000));
+      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 3500));
       
       const balance = await Promise.race([balancePromise, timeoutPromise]);
       const formatted = ethers.formatEther(balance);
       
       if (balEl) balEl.innerText = `${parseFloat(formatted).toFixed(2)} GRC`;
       balanceFound = true;
+      console.log(`✅ Balance: ${formatted} GRC (από ${rpc})`);
       break;
     } catch (err) {
       console.warn(`RPC Fail [${rpc}]:`, err.message);
