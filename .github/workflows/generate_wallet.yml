@@ -1,0 +1,19 @@
+name: Generate New Wallet
+
+on:
+  workflow_dispatch:
+
+jobs:
+  create:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install Ethers
+        run: npm install ethers
+
+      - name: Run script
+        run: node create_wallet.js
