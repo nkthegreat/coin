@@ -2,37 +2,33 @@ const { ethers } = require("ethers");
 
 async function main() {
   const RPC_URL = "https://ethereum-sepolia-rpc.publicnode.com";
-  const CONTRACT_ADDRESS = "0x59DdAD0414fc513524b1d15871F744C9987A855E";
-
   const privateKey = process.env.ADMIN_PRIVATE_KEY;
-  const citizenAddress = process.env.CITIZEN_ADDRESS;
-  const amountToMint = process.env.AMOUNT;
+  
+  // Το πορτοφόλι του πολίτη που χρειάζεται Gas
+  const citizenAddress = "0x9afE7A2CA26f9623c8af16d2eB3D15AC3E4Da3cc";
+  const amountEth = "0.01"; // Στέλνουμε 0.01 Sepolia ETH
 
   if (!privateKey) {
-    throw new Error("❌ Λείπει το ADMIN_PRIVATE_KEY από τα GitHub Secrets!");
-  }
-
-  if (!citizenAddress || !amountToMint) {
-    throw new Error("❌ Λείπουν οι παράμετροι citizen ή amount!");
+    throw new Error("❌ Λείπει το ADMIN_PRIVATE_KEY!");
   }
 
   const provider = new ethers.JsonRpcProvider(RPC_URL);
   const wallet = new ethers.Wallet(privateKey, provider);
 
-  const abi = [
-    "function rewardRecycling(address citizen, uint256 amount) external"
-  ];
-  const contract = new ethers.Contract(CONTRACT_ADDRESS, abi, wallet);
+  const balance = await provider.getBalance(wallet.address);
+  console.log(`Admin Wallet: ${wallet.address} | Balance: ${ethers.formatEther(balance)} ETH`);
+  console.log(`🚀 Αποστολή ${amountEth} Sepolia ETH στον πολίτη: ${citizenAddress}...`);
 
-  console.log(`🚀 [Ethereum Sepolia] Πίστωση ${amountToMint} GRC στον πολίτη: ${citizenAddress}`);
+  const tx = await wallet.sendTransaction({
+    to: citizenAddress,
+    value: ethers.parseEther(amountEth)
+  });
 
-  const amountWei = ethers.parseEther(amountToMint.toString());
-  const tx = await contract.rewardRecycling(citizenAddress, amountWei);
-  console.log("Tx sent! Hash:", tx.hash);
+  console.log("Tx Hash:", tx.hash);
   console.log(`Explorer: https://sepolia.etherscan.io/tx/${tx.hash}`);
 
   await tx.wait();
-  console.log("✅ Minting ολοκληρώθηκε επιτυχώς στο Ethereum Sepolia!");
+  console.log("🎉 Επιτυχία! Το πορτοφόλι του πολίτη γέμισε με Gas ETH!");
 }
 
 main().catch((err) => {
