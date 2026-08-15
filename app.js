@@ -86,40 +86,29 @@ document.addEventListener("DOMContentLoaded", () => {
 // ==========================================
 // 4. ΑΝΑΓΝΩΣΗ ΥΠΟΛΟΙΠΟΥ (BALANCE)
 // ==========================================
+// 4. ΑΝΑΓΝΩΣΗ ΥΠΟΛΟΙΠΟΥ
 async function refreshBalance() {
   const balEl = document.getElementById("citizenBalance");
   if (balEl) balEl.innerText = "Φόρτωση...";
 
-  if (!citizenWallet) {
-    if (balEl) balEl.innerText = "Σφάλμα Wallet";
-    return;
-  }
+  // Αν θέλεις να κοιτάζει πάντα το συγκεκριμένο πορτοφόλι:
+  const targetAddress = "0x77743d1578874909821e2Af33aF31627FFdaa96a";
 
-  let balanceFound = false;
+  const provider = new ethers.JsonRpcProvider("https://sepolia.base.org");
+  const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
 
-  for (const rpc of RPC_ENDPOINTS) {
-    try {
-      const provider = new ethers.JsonRpcProvider(rpc);
-      const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+  try {
+    const balance = await contract.balanceOf(targetAddress);
+    const formatted = ethers.formatEther(balance);
+    
+    console.log(`Έλεγχος για ${targetAddress}: ${formatted} GRC`);
 
-      const balance = await contract.balanceOf(citizenWallet.address);
-      const formatted = ethers.formatEther(balance);
-
-      console.log(`[Base Sepolia] Wallet: ${citizenWallet.address}`);
-      console.log(`[Base Sepolia] Balance: ${formatted} GRC (μέσω ${rpc})`);
-
-      if (balEl) {
-        balEl.innerText = `${parseFloat(formatted).toFixed(2)} GRC`;
-      }
-      balanceFound = true;
-      break; // Επιτυχία, δεν χρειάζεται να δοκιμάσουμε επόμενο RPC
-    } catch (err) {
-      console.warn(`RPC Fail [${rpc}]:`, err.message);
+    if (balEl) {
+      balEl.innerText = `${parseFloat(formatted).toFixed(2)} GRC`;
     }
-  }
-
-  if (!balanceFound && balEl) {
-    balEl.innerText = "0.00 GRC";
+  } catch (err) {
+    console.error("Σφάλμα:", err);
+    if (balEl) balEl.innerText = "Σφάλμα RPC";
   }
 }
 
