@@ -1,11 +1,8 @@
 const { ethers } = require("ethers");
 
 async function main() {
-  // RPC Endpoint για Base Sepolia
-  const RPC_URL = "https://sepolia.base.org";
-  
-  // Το νέο CONTRACT_ADDRESS που θα προκύψει από το deploy στο Base Sepolia
-  const CONTRACT_ADDRESS = "0x59DdAD0414fc513524b1d15871F744C9987A855E";
+  const RPC_URL = "https://ethereum-sepolia-rpc.publicnode.com";
+const CONTRACT_ADDRESS = "0x59DdAD0414fc513524b1d15871F744C9987A855E";
 
   const privateKey = process.env.ADMIN_PRIVATE_KEY;
   const citizenAddress = process.env.CITIZEN_ADDRESS;
