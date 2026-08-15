@@ -14,7 +14,6 @@ const CONTRACT_ABI = [
 // ==========================================
 let citizenWallet;
 let merchantWallet;
-let targetMerchantAddress = null; // Αποθηκεύει τη διεύθυνση ΜΟΝΟ από το Scanner
 
 try {
   let savedCitizenKey = localStorage.getItem("demo_citizen_key");
@@ -40,7 +39,17 @@ try {
 // 3. UI INIT & QR GENERATION
 // ==========================================
 document.addEventListener("DOMContentLoaded", () => {
+  // Εμφάνιση διεύθυνσης Πολίτη
+  if (citizenWallet) {
+    const addrEl = document.getElementById("citizenAddress");
+    if (addrEl) addrEl.innerText = citizenWallet.address;
+  }
+
+  // Εμφάνιση διεύθυνσης & QR Εμπόρου
   if (merchantWallet) {
+    const mAddrEl = document.getElementById("merchantAddress");
+    if (mAddrEl) mAddrEl.innerText = merchantWallet.address;
+
     const mQrContainer = document.getElementById("merchantQrcode");
     if (mQrContainer && typeof QRCode !== "undefined") {
       mQrContainer.innerHTML = "";
@@ -51,6 +60,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
   }
+
   refreshBalance();
 });
 
@@ -80,23 +90,29 @@ async function refreshBalance() {
 }
 
 // ==========================================
-// 5. QR CODE SCANNER (ΠΟΛΙΤΗΣ)
+// 5. QR CODE SCANNER & ΑΜΕΣΗ ΠΛΗΡΩΜΗ
 // ==========================================
 let html5QrScanner = null;
 
 async function startCitizenScanner() {
+  const amount = document.getElementById("transferAmount").value;
+  if (!amount || parseFloat(amount) <= 0) {
+    alert("Παρακαλώ εισάγετε πρώτα το ποσό GRC προς πληρωμή!");
+    return;
+  }
+
   const readerEl = document.getElementById("reader");
   const btnScan = document.getElementById("btnScanQR");
 
   if (html5QrScanner && html5QrScanner.isScanning) {
     await html5QrScanner.stop();
     readerEl.classList.add("hidden");
-    btnScan.innerText = "📷 Σκανάρισμα QR για Πληρωμή";
+    btnScan.innerText = "📷 Σκανάρισμα QR & Άμεση Πληρωμή";
     return;
   }
 
   readerEl.classList.remove("hidden");
-  btnScan.innerText = "❌ Κλείσιμο Κάμερας";
+  btnScan.innerText = "❌ Ακύρωση Κάμερας";
 
   html5QrScanner = new Html5Qrcode("reader");
 
@@ -104,23 +120,17 @@ async function startCitizenScanner() {
     await html5QrScanner.start(
       { facingMode: "environment" },
       { fps: 10, qrbox: { width: 220, height: 220 } },
-      (decodedText) => {
+      async (decodedText) => {
         let cleanAddress = decodedText.trim();
         if (cleanAddress.includes(":")) cleanAddress = cleanAddress.split(":")[1];
         if (cleanAddress.includes("@")) cleanAddress = cleanAddress.split("@")[0];
 
         if (cleanAddress.startsWith("0x") && cleanAddress.length === 42) {
-          targetMerchantAddress = cleanAddress;
+          await html5QrScanner.stop();
+          readerEl.classList.add("hidden");
+          btnScan.innerText = "📷 Σκανάρισμα QR & Άμεση Πληρωμή";
 
-          // Ενημέρωση και εμφάνιση της κάρτας πληρωμής
-          document.getElementById("displayMerchantAddress").innerText = targetMerchantAddress;
-          document.getElementById("scannedMerchantCard").classList.remove("hidden");
-
-          // Κλείσιμο Scanner
-          html5QrScanner.stop().then(() => {
-            readerEl.classList.add("hidden");
-            btnScan.innerText = "🔄 Αλλαγή Εμπόρου (Ξανά Σκανάρισμα)";
-          });
+          await executeTransfer(cleanAddress, amount);
         }
       },
       () => {}
@@ -129,29 +139,17 @@ async function startCitizenScanner() {
     console.error("Camera error:", err);
     alert("Δεν δόθηκε πρόσβαση στην κάμερα.");
     readerEl.classList.add("hidden");
-    btnScan.innerText = "📷 Σκανάρισμα QR για Πληρωμή";
+    btnScan.innerText = "📷 Σκανάρισμα QR & Άμεση Πληρωμή";
   }
 }
 
-// ==========================================
-// 6. ΕΚΤΕΛΕΣΗ ΠΛΗΡΩΜΗΣ (ON-CHAIN TRANSFER)
-// ==========================================
-async function sendTransfer() {
-  const amount = document.getElementById("transferAmount").value;
-  const btn = document.getElementById("btnTransfer");
+async function executeTransfer(recipient, amount) {
+  const btnScan = document.getElementById("btnScanQR");
+  const statusEl = document.getElementById("txStatus");
 
-  if (!targetMerchantAddress) {
-    alert("Σκανάρετε πρώτα το QR του εμπόρου!");
-    return;
-  }
-
-  if (!amount || parseFloat(amount) <= 0) {
-    alert("Παρακαλώ εισάγετε έγκυρο ποσό!");
-    return;
-  }
-
-  btn.disabled = true;
-  btn.innerText = "⏳ Εκτέλεση Πληρωμής...";
+  btnScan.disabled = true;
+  statusEl.classList.remove("hidden");
+  statusEl.innerText = `⏳ Αποστολή ${amount} GRC...`;
 
   try {
     const provider = new ethers.JsonRpcProvider(RPC_URL);
@@ -159,30 +157,25 @@ async function sendTransfer() {
     const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
 
     const amountWei = ethers.parseEther(amount.toString());
-    const tx = await contract.transfer(targetMerchantAddress, amountWei);
+    const tx = await contract.transfer(recipient, amountWei);
 
+    statusEl.innerText = `🚀 Η συναλλαγή στάλθηκε! Αναμονή επιβεβαίωσης...`;
     await tx.wait();
 
     alert(`🎉 Επιτυχής πληρωμή ${amount} GRC!`);
-    
-    // Καθαρισμός UI μετά την πληρωμή
     document.getElementById("transferAmount").value = "";
-    document.getElementById("scannedMerchantCard").classList.add("hidden");
-    document.getElementById("btnScanQR").innerText = "📷 Σκανάρισμα QR για Πληρωμή";
-    targetMerchantAddress = null;
-
     refreshBalance();
   } catch (err) {
     console.error(err);
     alert(`Σφάλμα: ${err.message}`);
   } finally {
-    btn.disabled = false;
-    btn.innerText = "💸 Ολοκλήρωση Πληρωμής";
+    btnScan.disabled = false;
+    statusEl.classList.add("hidden");
   }
 }
 
 // ==========================================
-// 7. TABS
+// 6. TABS
 // ==========================================
 function showTab(tabName) {
   ['citizen', 'merchant'].forEach(t => {
