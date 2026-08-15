@@ -1,0 +1,36 @@
+name: Send Gas ETH (Faucet)
+
+on:
+  workflow_dispatch:
+    inputs:
+      recipient:
+        description: 'Διεύθυνση Παραλήπτη (0x...)'
+        required: true
+        type: string
+      amount:
+        description: 'Ποσό Sepolia ETH'
+        required: true
+        default: '0.005'
+        type: string
+
+jobs:
+  fund-gas:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Dependencies
+        run: npm install ethers
+
+      - name: Send Gas ETH
+        env:
+          ADMIN_PRIVATE_KEY: ${{ secrets.ADMIN_PRIVATE_KEY }}
+          RECIPIENT_ADDRESS: ${{ github.event.inputs.recipient }}
+          AMOUNT_ETH: ${{ github.event.inputs.amount }}
+        run: node send_gas.js
