@@ -1,31 +1,36 @@
-// --- ΡΥΘΜΙΣΕΙΣ GITHUB & BLOCKCHAIN ---
+// ==========================================
+// 1. ΡΥΘΜΙΣΕΙΣ GITHUB & BLOCKCHAIN (BASE SEPOLIA)
+// ==========================================
 const GITHUB_USERNAME = "nkthegreat";
 const GITHUB_REPO = "coin";
 const GITHUB_TOKEN = "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";
 
-// Διεύθυνση Smart Contract στο Base Sepolia
+// Το ενεργό Smart Contract στο Base Sepolia
 const CONTRACT_ADDRESS = "0x59DdAD0414fc513524b1d15871F744C9987A855E";
 
-// Σταθερά & Αξιόπιστα Base Sepolia RPC Endpoints
+// Λίστα Base Sepolia RPCs με σειρά προτεραιότητας
 const RPC_ENDPOINTS = [
-  "https://base-sepolia-rpc.publicnode.com",
   "https://sepolia.base.org",
+  "https://base-sepolia-rpc.publicnode.com",
   "https://base-sepolia.blockpi.network/v1/rpc/public",
   "https://1rpc.io/base-sepolia"
 ];
 
+// ABI Συμβολαίου ERC-20
 const CONTRACT_ABI = [
   "function balanceOf(address owner) view returns (uint256)",
   "function rewardRecycling(address citizen, uint256 amount) external",
   "function transfer(address to, uint256 amount) returns (bool)"
 ];
 
-// 1. Δημιουργία ή φόρτωση Wallet Πολίτη & Εμπόρου
+// ==========================================
+// 2. ΔΗΜΙΟΥΡΓΙΑ / ΦΟΡΤΩΣΗ WALLETS
+// ==========================================
 let citizenWallet;
 let merchantWallet;
 
 try {
-  // Wallet Πολίτη
+  // Wallet Πολίτη (αποθήκευση στο LocalStorage του browser)
   let savedKey = localStorage.getItem("demo_citizen_key");
   if (!savedKey) {
     citizenWallet = ethers.Wallet.createRandom();
@@ -43,37 +48,44 @@ try {
     merchantWallet = new ethers.Wallet(merchantKey);
   }
 } catch (e) {
-  console.error("Wallet error:", e);
+  console.error("Wallet init error:", e);
 }
 
-// 2. Εκκίνηση UI
+// ==========================================
+// 3. ΕΚΚΙΝΗΣΗ UI (DOM READY)
+// ==========================================
 document.addEventListener("DOMContentLoaded", () => {
+  // Αρχικοποίηση UI Πολίτη
   if (citizenWallet) {
     const addrEl = document.getElementById("citizenAddress");
     if (addrEl) addrEl.innerText = citizenWallet.address;
 
     const qrContainer = document.getElementById("qrcode");
-    if (qrContainer) {
+    if (qrContainer && typeof QRCode !== "undefined") {
       qrContainer.innerHTML = "";
       new QRCode(qrContainer, { text: citizenWallet.address, width: 150, height: 150 });
     }
   }
 
+  // Αρχικοποίηση UI Εμπόρου
   if (merchantWallet) {
     const mAddrEl = document.getElementById("merchantAddress");
     if (mAddrEl) mAddrEl.innerText = merchantWallet.address;
 
     const mQrContainer = document.getElementById("merchantQrcode");
-    if (mQrContainer) {
+    if (mQrContainer && typeof QRCode !== "undefined") {
       mQrContainer.innerHTML = "";
       new QRCode(mQrContainer, { text: merchantWallet.address, width: 150, height: 150 });
     }
   }
 
+  // Αυτόματη πρώτη ανάγνωση υπολοίπου
   refreshBalance();
 });
 
-// 3. Ανάγνωση Υπολοίπου (Base Sepolia)
+// ==========================================
+// 4. ΑΝΑΓΝΩΣΗ ΥΠΟΛΟΙΠΟΥ (BALANCE)
+// ==========================================
 async function refreshBalance() {
   const balEl = document.getElementById("citizenBalance");
   if (balEl) balEl.innerText = "Φόρτωση...";
@@ -89,15 +101,18 @@ async function refreshBalance() {
     try {
       const provider = new ethers.JsonRpcProvider(rpc);
       const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
-      
-      // Απευθείας ανάγνωση υπολοίπου
+
       const balance = await contract.balanceOf(citizenWallet.address);
       const formatted = ethers.formatEther(balance);
-      
-      if (balEl) balEl.innerText = `${parseFloat(formatted).toFixed(2)} GRC`;
+
+      console.log(`[Base Sepolia] Wallet: ${citizenWallet.address}`);
+      console.log(`[Base Sepolia] Balance: ${formatted} GRC (μέσω ${rpc})`);
+
+      if (balEl) {
+        balEl.innerText = `${parseFloat(formatted).toFixed(2)} GRC`;
+      }
       balanceFound = true;
-      console.log(`✅ Επιτυχία! Υπόλοιπο: ${formatted} GRC (από ${rpc})`);
-      break;
+      break; // Επιτυχία, δεν χρειάζεται να δοκιμάσουμε επόμενο RPC
     } catch (err) {
       console.warn(`RPC Fail [${rpc}]:`, err.message);
     }
@@ -108,7 +123,9 @@ async function refreshBalance() {
   }
 }
 
-// 4. Μεταφορά Tokens (Πολίτης -> Έμπορος / Άλλος Πολίτης)
+// ==========================================
+// 5. ΜΕΤΑΦΟΡΑ TOKENS (TRANSFER)
+// ==========================================
 async function sendTransfer() {
   const recipient = document.getElementById("transferRecipient").value.trim();
   const amount = document.getElementById("transferAmount").value;
@@ -135,7 +152,7 @@ async function sendTransfer() {
 
     const amountWei = ethers.parseEther(amount.toString());
     const tx = await contract.transfer(recipient, amountWei);
-    
+
     logStatus(`🚀 Η συναλλαγή στάλθηκε! Tx: ${tx.hash}`);
     await tx.wait();
 
@@ -151,7 +168,9 @@ async function sendTransfer() {
   }
 }
 
-// 5. Scanner Κάμερας (Υπάλληλος)
+// ==========================================
+// 6. SCANNER QR CODE (ΥΠΑΛΛΗΛΟΣ)
+// ==========================================
 let html5QrCode;
 function startScanner() {
   const readerEl = document.getElementById("reader");
@@ -178,7 +197,9 @@ function startScanner() {
   }
 }
 
-// 6. Λειτουργία Επιβράβευσης (Minting μέσω GitHub Actions)
+// ==========================================
+// 7. ΕΠΙΒΡΑΒΕΥΣΗ (MINTING VIA GITHUB ACTIONS)
+// ==========================================
 async function rewardCitizen() {
   const targetCitizen = document.getElementById("scannedCitizen").value.trim();
   const weight = document.getElementById("wasteWeight").value;
@@ -195,7 +216,7 @@ async function rewardCitizen() {
 
   try {
     const url = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/actions/workflows/mint.yml/dispatches`;
-    
+
     const response = await fetch(url, {
       method: "POST",
       headers: {
@@ -230,7 +251,9 @@ async function rewardCitizen() {
   }
 }
 
-// 7. Εναλλαγή Tabs
+// ==========================================
+// 8. TABS & UI HELPERS
+// ==========================================
 function showTab(tabName) {
   ['citizen', 'agent', 'merchant'].forEach(t => {
     const tab = document.getElementById(`tab${t.charAt(0).toUpperCase() + t.slice(1)}`);
@@ -244,7 +267,7 @@ function showTab(tabName) {
 
   const activeTab = document.getElementById(`tab${tabName.charAt(0).toUpperCase() + tabName.slice(1)}`);
   const activeBtn = document.getElementById(`tab${tabName.charAt(0).toUpperCase() + tabName.slice(1)}Btn`);
-  
+
   if (activeTab) activeTab.classList.remove('hidden');
   if (activeBtn) {
     activeBtn.classList.replace('text-gray-500', 'text-green-700');
