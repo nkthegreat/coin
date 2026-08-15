@@ -1,22 +1,21 @@
 // ==========================================
-// 1. ΡΥΘΜΙΣΕΙΣ GITHUB & BLOCKCHAIN (BASE SEPOLIA)
-// ==========================================
-// ==========================================
 // 1. ΡΥΘΜΙΣΕΙΣ GITHUB & BLOCKCHAIN (ETHEREUM SEPOLIA)
 // ==========================================
 const GITHUB_USERNAME = "nkthegreat";
 const GITHUB_REPO = "coin";
 const GITHUB_TOKEN = "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";
 
-// Συμβόλαιο στο Ethereum Sepolia (ήδη ενεργό με 5 GRC)
+// Συμβόλαιο στο Ethereum Sepolia
 const CONTRACT_ADDRESS = "0x59DdAD0414fc513524b1d15871F744C9987A855E";
 
-// RPCs του Ethereum Sepolia
+// Σταθερά RPCs για Ethereum Sepolia
 const RPC_ENDPOINTS = [
   "https://ethereum-sepolia-rpc.publicnode.com",
   "https://rpc.sepolia.org",
-  "https://1rpc.io/sepolia"
+  "https://1rpc.io/sepolia",
+  "https://gateway.tenderly.co/public/sepolia"
 ];
+
 const CONTRACT_ABI = [
   "function balanceOf(address owner) view returns (uint256)",
   "function rewardRecycling(address citizen, uint256 amount) external",
@@ -79,36 +78,48 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Αυτόματη πρώτη ανάγνωση υπολοίπου
+  // Αυτόματη ανάγνωση υπολοίπου
   refreshBalance();
 });
 
 // ==========================================
-// 4. ΑΝΑΓΝΩΣΗ ΥΠΟΛΟΙΠΟΥ (BALANCE)
+// 4. ΑΝΑΓΝΩΣΗ ΥΠΟΛΟΙΠΟΥ (ETHEREUM SEPOLIA)
 // ==========================================
-// 4. ΑΝΑΓΝΩΣΗ ΥΠΟΛΟΙΠΟΥ
 async function refreshBalance() {
   const balEl = document.getElementById("citizenBalance");
   if (balEl) balEl.innerText = "Φόρτωση...";
 
-  // Αν θέλεις να κοιτάζει πάντα το συγκεκριμένο πορτοφόλι:
-  const targetAddress = "0x77743d1578874909821e2Af33aF31627FFdaa96a";
+  if (!citizenWallet) {
+    if (balEl) balEl.innerText = "Σφάλμα Wallet";
+    return;
+  }
 
-  const provider = new ethers.JsonRpcProvider("https://sepolia.base.org");
-  const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+  let balanceFound = false;
 
-  try {
-    const balance = await contract.balanceOf(targetAddress);
-    const formatted = ethers.formatEther(balance);
-    
-    console.log(`Έλεγχος για ${targetAddress}: ${formatted} GRC`);
+  for (const rpc of RPC_ENDPOINTS) {
+    try {
+      const provider = new ethers.JsonRpcProvider(rpc);
+      const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
 
-    if (balEl) {
-      balEl.innerText = `${parseFloat(formatted).toFixed(2)} GRC`;
+      // Ελέγχουμε το πορτοφόλι που εμφανίζεται στην οθόνη
+      const balance = await contract.balanceOf(citizenWallet.address);
+      const formatted = ethers.formatEther(balance);
+
+      console.log(`[Eth Sepolia] Checking: ${citizenWallet.address}`);
+      console.log(`[Eth Sepolia] Balance: ${formatted} GRC (μέσω ${rpc})`);
+
+      if (balEl) {
+        balEl.innerText = `${parseFloat(formatted).toFixed(2)} GRC`;
+      }
+      balanceFound = true;
+      break;
+    } catch (err) {
+      console.warn(`RPC Fail [${rpc}]:`, err.message);
     }
-  } catch (err) {
-    console.error("Σφάλμα:", err);
-    if (balEl) balEl.innerText = "Σφάλμα RPC";
+  }
+
+  if (!balanceFound && balEl) {
+    balEl.innerText = "0.00 GRC";
   }
 }
 
