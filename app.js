@@ -32,31 +32,36 @@ try {
     merchantWallet = new ethers.Wallet(savedMerchantKey);
   }
 } catch (e) {
-  console.error("Wallet error:", e);
+  console.error("Wallet initialization error:", e);
 }
 
 // ==========================================
-// 3. UI INIT & QR GENERATION
+// 3. UI INIT, DISPLAY ADDRESSES & QR CODE
 // ==========================================
 document.addEventListener("DOMContentLoaded", () => {
-  // Εμφάνιση διεύθυνσης Πολίτη
+  // Εμφάνιση διεύθυνσης Citizen
   if (citizenWallet) {
-    const addrEl = document.getElementById("citizenAddress");
-    if (addrEl) addrEl.innerText = citizenWallet.address;
+    const citizenAddrEl = document.getElementById("citizenAddress");
+    if (citizenAddrEl) {
+      citizenAddrEl.innerText = citizenWallet.address;
+    }
   }
 
-  // Εμφάνιση διεύθυνσης & QR Εμπόρου
+  // Εμφάνιση διεύθυνσης & QR Code Merchant
   if (merchantWallet) {
-    const mAddrEl = document.getElementById("merchantAddress");
-    if (mAddrEl) mAddrEl.innerText = merchantWallet.address;
+    const merchantAddrEl = document.getElementById("merchantAddress");
+    if (merchantAddrEl) {
+      merchantAddrEl.innerText = merchantWallet.address;
+    }
 
-    const mQrContainer = document.getElementById("merchantQrcode");
-    if (mQrContainer && typeof QRCode !== "undefined") {
-      mQrContainer.innerHTML = "";
-      new QRCode(mQrContainer, { 
-        text: merchantWallet.address, 
-        width: 180, 
-        height: 180 
+    const qrContainer = document.getElementById("merchantQrcode");
+    if (qrContainer && typeof QRCode !== "undefined") {
+      qrContainer.innerHTML = "";
+      new QRCode(qrContainer, {
+        text: merchantWallet.address,
+        width: 180,
+        height: 180,
+        correctLevel: QRCode.CorrectLevel.H
       });
     }
   }
@@ -65,7 +70,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // ==========================================
-// 4. ΑΝΑΓΝΩΣΗ ΥΠΟΛΟΙΠΟΥ
+// 4. ΑΝΑΓΝΩΣΗ ΥΠΟΛΟΙΠΟΥ (GRC BALANCE)
 // ==========================================
 async function refreshBalance() {
   const balEl = document.getElementById("citizenBalance");
@@ -95,9 +100,12 @@ async function refreshBalance() {
 let html5QrScanner = null;
 
 async function startCitizenScanner() {
-  const amount = document.getElementById("transferAmount").value;
+  const amountInput = document.getElementById("transferAmount");
+  const amount = amountInput.value.trim();
+
   if (!amount || parseFloat(amount) <= 0) {
     alert("Παρακαλώ εισάγετε πρώτα το ποσό GRC προς πληρωμή!");
+    amountInput.focus();
     return;
   }
 
@@ -143,6 +151,9 @@ async function startCitizenScanner() {
   }
 }
 
+// ==========================================
+// 6. ON-CHAIN ΜΕΤΑΦΟΡΑ GRC
+// ==========================================
 async function executeTransfer(recipient, amount) {
   const btnScan = document.getElementById("btnScanQR");
   const statusEl = document.getElementById("txStatus");
@@ -166,8 +177,8 @@ async function executeTransfer(recipient, amount) {
     document.getElementById("transferAmount").value = "";
     refreshBalance();
   } catch (err) {
-    console.error(err);
-    alert(`Σφάλμα: ${err.message}`);
+    console.error("Transfer Error:", err);
+    alert(`Σφάλμα μεταφοράς: ${err.reason || err.message}`);
   } finally {
     btnScan.disabled = false;
     statusEl.classList.add("hidden");
@@ -175,25 +186,25 @@ async function executeTransfer(recipient, amount) {
 }
 
 // ==========================================
-// 6. TABS
+// 7. TABS NAVIGATION
 // ==========================================
 function showTab(tabName) {
-  ['citizen', 'merchant'].forEach(t => {
+  ['citizen', 'merchant'].forEach((t) => {
     const tab = document.getElementById(`tab${t.charAt(0).toUpperCase() + t.slice(1)}`);
     const btn = document.getElementById(`tab${t.charAt(0).toUpperCase() + t.slice(1)}Btn`);
-    if (tab) tab.classList.add('hidden');
+    if (tab) tab.classList.add("hidden");
     if (btn) {
-      btn.classList.replace('text-green-700', 'text-gray-500');
-      btn.classList.remove('border-b-2', 'border-green-700');
+      btn.classList.replace("text-green-700", "text-gray-500");
+      btn.classList.remove("border-b-2", "border-green-700");
     }
   });
 
   const activeTab = document.getElementById(`tab${tabName.charAt(0).toUpperCase() + tabName.slice(1)}`);
   const activeBtn = document.getElementById(`tab${tabName.charAt(0).toUpperCase() + tabName.slice(1)}Btn`);
 
-  if (activeTab) activeTab.classList.remove('hidden');
+  if (activeTab) activeTab.classList.remove("hidden");
   if (activeBtn) {
-    activeBtn.classList.replace('text-gray-500', 'text-green-700');
-    activeBtn.classList.add('border-b-2', 'border-green-700');
+    activeBtn.classList.replace("text-gray-500", "text-green-700");
+    activeBtn.classList.add("border-b-2", "border-green-700");
   }
 }
