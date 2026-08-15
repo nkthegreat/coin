@@ -7,6 +7,10 @@ jobs:
   create:
     runs-on: ubuntu-latest
     steps:
+      # Αυτό το βήμα έλειπε και κατεβάζει τα αρχεία σου στον runner
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
