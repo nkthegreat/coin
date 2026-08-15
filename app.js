@@ -10,26 +10,17 @@ const CONTRACT_ABI = [
 ];
 
 // ==========================================
-// 2. WALLET INITIALIZATION
+// 2. WALLET INITIALIZATION (ΕΝΙΑΙΟ ΠΟΡΤΟΦΟΛΙ)
 // ==========================================
-let citizenWallet;
-let merchantWallet;
+let appWallet;
 
 try {
-  let savedCitizenKey = localStorage.getItem("demo_citizen_key");
-  if (!savedCitizenKey) {
-    citizenWallet = ethers.Wallet.createRandom();
-    localStorage.setItem("demo_citizen_key", citizenWallet.privateKey);
+  let savedKey = localStorage.getItem("demo_unified_wallet_key");
+  if (!savedKey) {
+    appWallet = ethers.Wallet.createRandom();
+    localStorage.setItem("demo_unified_wallet_key", appWallet.privateKey);
   } else {
-    citizenWallet = new ethers.Wallet(savedCitizenKey);
-  }
-
-  let savedMerchantKey = localStorage.getItem("demo_merchant_key");
-  if (!savedMerchantKey) {
-    merchantWallet = ethers.Wallet.createRandom();
-    localStorage.setItem("demo_merchant_key", merchantWallet.privateKey);
-  } else {
-    merchantWallet = new ethers.Wallet(savedMerchantKey);
+    appWallet = new ethers.Wallet(savedKey);
   }
 } catch (e) {
   console.error("Wallet initialization error:", e);
@@ -39,26 +30,25 @@ try {
 // 3. UI INIT, DISPLAY ADDRESSES & QR CODE
 // ==========================================
 document.addEventListener("DOMContentLoaded", () => {
-  // Εμφάνιση διεύθυνσης Citizen
-  if (citizenWallet) {
+  if (appWallet) {
+    // 1. Εμφάνιση διεύθυνσης στην καρτέλα Πολίτη
     const citizenAddrEl = document.getElementById("citizenAddress");
     if (citizenAddrEl) {
-      citizenAddrEl.innerText = citizenWallet.address;
+      citizenAddrEl.innerText = appWallet.address;
     }
-  }
 
-  // Εμφάνιση διεύθυνσης & QR Code Merchant
-  if (merchantWallet) {
+    // 2. Εμφάνιση της ΙΔΙΑΣ διεύθυνσης στην καρτέλα Εμπόρου
     const merchantAddrEl = document.getElementById("merchantAddress");
     if (merchantAddrEl) {
-      merchantAddrEl.innerText = merchantWallet.address;
+      merchantAddrEl.innerText = appWallet.address;
     }
 
+    // 3. Παραγωγή QR Code με τη διεύθυνση του κοινού πορτοφολιού
     const qrContainer = document.getElementById("merchantQrcode");
     if (qrContainer && typeof QRCode !== "undefined") {
       qrContainer.innerHTML = "";
       new QRCode(qrContainer, {
-        text: merchantWallet.address,
+        text: appWallet.address,
         width: 180,
         height: 180,
         correctLevel: QRCode.CorrectLevel.H
@@ -76,13 +66,13 @@ async function refreshBalance() {
   const balEl = document.getElementById("citizenBalance");
   if (balEl) balEl.innerText = "Φόρτωση...";
 
-  if (!citizenWallet) return;
+  if (!appWallet) return;
 
   try {
     const provider = new ethers.JsonRpcProvider(RPC_URL);
     const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
 
-    const balance = await contract.balanceOf(citizenWallet.address);
+    const balance = await contract.balanceOf(appWallet.address);
     const formatted = ethers.formatEther(balance);
 
     if (balEl) {
@@ -164,7 +154,7 @@ async function executeTransfer(recipient, amount) {
 
   try {
     const provider = new ethers.JsonRpcProvider(RPC_URL);
-    const signer = citizenWallet.connect(provider);
+    const signer = appWallet.connect(provider);
     const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
 
     const amountWei = ethers.parseEther(amount.toString());
