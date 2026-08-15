@@ -3,7 +3,7 @@ const { ethers } = require("ethers");
 async function main() {
   // Ethereum Sepolia RPC
   const RPC_URL = "https://ethereum-sepolia-rpc.publicnode.com";
-  const CONTRACT_ADDRESS = "0x59DdAD0414fc513524b1d15871F744C9987A855E";
+  const CONTRACT_ADDRESS = "0xCCbF413FdA35E498215E5c8E35A1C00dF1fd3d57";
 
   const privateKey = process.env.ADMIN_PRIVATE_KEY;
   const citizenAddress = process.env.CITIZEN_ADDRESS;
