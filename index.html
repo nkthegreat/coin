@@ -44,6 +44,12 @@
         </button>
       </div>
 
+      <!-- Citizen Wallet Info -->
+      <div class="text-center space-y-1">
+        <span class="text-xs text-gray-500 font-medium">Η Διεύθυνσή σας (Citizen Wallet):</span>
+        <p id="citizenAddress" class="text-xs font-mono bg-gray-100 p-2 rounded break-all border border-gray-200 text-gray-700 select-all"></p>
+      </div>
+
       <!-- Payment Section -->
       <div class="space-y-4">
         <div>
@@ -64,8 +70,12 @@
     <!-- TAB 2: ΕΜΠΟΡΟΣ -->
     <div id="tabMerchant" class="p-6 space-y-6 hidden">
       <div class="text-center space-y-3">
-        <span class="text-xs text-gray-500 font-medium">QR Code Είσπραξης Εμπόρου:</span>
-        <div class="flex justify-center">
+        <!-- Merchant Wallet Address -->
+        <span class="text-xs text-gray-500 font-medium">Διεύθυνση Εμπόρου:</span>
+        <p id="merchantAddress" class="text-xs font-mono bg-gray-100 p-2 rounded break-all border border-gray-200 text-gray-700 select-all"></p>
+
+        <!-- QR Code -->
+        <div class="flex justify-center pt-2">
           <div id="merchantQrcode" class="p-3 bg-white rounded-xl border border-gray-200 shadow-md"></div>
         </div>
         <p class="text-xs text-gray-500 max-w-xs mx-auto">
