@@ -1,13 +1,8 @@
 // ==========================================
-// 1. ΡΥΘΜΙΣΕΙΣ BLOCKCHAIN (ETHEREUM SEPOLIA)
+// 1. BLOCKCHAIN SETTINGS (ETHEREUM SEPOLIA)
 // ==========================================
 const CONTRACT_ADDRESS = "0x59DdAD0414fc513524b1d15871F744C9987A855E";
-
-const RPC_ENDPOINTS = [
-  "https://ethereum-sepolia-rpc.publicnode.com",
-  "https://rpc.sepolia.org",
-  "https://1rpc.io/sepolia"
-];
+const RPC_URL = "https://ethereum-sepolia-rpc.publicnode.com";
 
 const CONTRACT_ABI = [
   "function balanceOf(address owner) view returns (uint256)",
@@ -19,6 +14,7 @@ const CONTRACT_ABI = [
 // ==========================================
 let citizenWallet;
 let merchantWallet;
+let targetMerchantAddress = null; // Αποθηκεύει τη διεύθυνση ΜΟΝΟ από το Scanner
 
 try {
   let savedCitizenKey = localStorage.getItem("demo_citizen_key");
@@ -37,40 +33,29 @@ try {
     merchantWallet = new ethers.Wallet(savedMerchantKey);
   }
 } catch (e) {
-  console.error("Wallet setup error:", e);
+  console.error("Wallet error:", e);
 }
 
 // ==========================================
-// 3. UI INITIALIZATION
+// 3. UI INIT & QR GENERATION
 // ==========================================
 document.addEventListener("DOMContentLoaded", () => {
-  if (citizenWallet) {
-    const addrEl = document.getElementById("citizenAddress");
-    if (addrEl) addrEl.innerText = citizenWallet.address;
-
-    const qrContainer = document.getElementById("qrcode");
-    if (qrContainer && typeof QRCode !== "undefined") {
-      qrContainer.innerHTML = "";
-      new QRCode(qrContainer, { text: citizenWallet.address, width: 150, height: 150 });
-    }
-  }
-
   if (merchantWallet) {
-    const mAddrEl = document.getElementById("merchantAddress");
-    if (mAddrEl) mAddrEl.innerText = merchantWallet.address;
-
     const mQrContainer = document.getElementById("merchantQrcode");
     if (mQrContainer && typeof QRCode !== "undefined") {
       mQrContainer.innerHTML = "";
-      new QRCode(mQrContainer, { text: merchantWallet.address, width: 150, height: 150 });
+      new QRCode(mQrContainer, { 
+        text: merchantWallet.address, 
+        width: 180, 
+        height: 180 
+      });
     }
   }
-
   refreshBalance();
 });
 
 // ==========================================
-// 4. ΑΝΑΓΝΩΣΗ ΥΠΟΛΟΙΠΩΝ (GRC & GAS ETH)
+// 4. ΑΝΑΓΝΩΣΗ ΥΠΟΛΟΙΠΟΥ
 // ==========================================
 async function refreshBalance() {
   const balEl = document.getElementById("citizenBalance");
@@ -78,44 +63,85 @@ async function refreshBalance() {
 
   if (!citizenWallet) return;
 
-  for (const rpc of RPC_ENDPOINTS) {
-    try {
-      const provider = new ethers.JsonRpcProvider(rpc);
-      const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+  try {
+    const provider = new ethers.JsonRpcProvider(RPC_URL);
+    const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
 
-      const [grcBalance, ethBalance] = await Promise.all([
-        contract.balanceOf(citizenWallet.address),
-        provider.getBalance(citizenWallet.address)
-      ]);
+    const balance = await contract.balanceOf(citizenWallet.address);
+    const formatted = ethers.formatEther(balance);
 
-      const formattedGrc = ethers.formatEther(grcBalance);
-      const formattedEth = ethers.formatEther(ethBalance);
-
-      console.log(`Citizen: ${citizenWallet.address}`);
-      console.log(`GRC: ${formattedGrc} | Gas ETH: ${formattedEth}`);
-
-      if (balEl) {
-        balEl.innerText = `${parseFloat(formattedGrc).toFixed(2)} GRC`;
-      }
-      return;
-    } catch (err) {
-      console.warn(`RPC Fail [${rpc}]:`, err.message);
+    if (balEl) {
+      balEl.innerText = `${parseFloat(formatted).toFixed(2)} GRC`;
     }
+  } catch (err) {
+    console.error("RPC Error:", err);
+    if (balEl) balEl.innerText = "Σφάλμα RPC";
   }
-
-  if (balEl) balEl.innerText = "0.00 GRC";
 }
 
 // ==========================================
-// 5. ΑΠΕΥΘΕΙΑΣ ΠΛΗΡΩΜΗ / ΜΕΤΑΦΟΡΑ (P2P TRANSFER)
+// 5. QR CODE SCANNER (ΠΟΛΙΤΗΣ)
+// ==========================================
+let html5QrScanner = null;
+
+async function startCitizenScanner() {
+  const readerEl = document.getElementById("reader");
+  const btnScan = document.getElementById("btnScanQR");
+
+  if (html5QrScanner && html5QrScanner.isScanning) {
+    await html5QrScanner.stop();
+    readerEl.classList.add("hidden");
+    btnScan.innerText = "📷 Σκανάρισμα QR για Πληρωμή";
+    return;
+  }
+
+  readerEl.classList.remove("hidden");
+  btnScan.innerText = "❌ Κλείσιμο Κάμερας";
+
+  html5QrScanner = new Html5Qrcode("reader");
+
+  try {
+    await html5QrScanner.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: { width: 220, height: 220 } },
+      (decodedText) => {
+        let cleanAddress = decodedText.trim();
+        if (cleanAddress.includes(":")) cleanAddress = cleanAddress.split(":")[1];
+        if (cleanAddress.includes("@")) cleanAddress = cleanAddress.split("@")[0];
+
+        if (cleanAddress.startsWith("0x") && cleanAddress.length === 42) {
+          targetMerchantAddress = cleanAddress;
+
+          // Ενημέρωση και εμφάνιση της κάρτας πληρωμής
+          document.getElementById("displayMerchantAddress").innerText = targetMerchantAddress;
+          document.getElementById("scannedMerchantCard").classList.remove("hidden");
+
+          // Κλείσιμο Scanner
+          html5QrScanner.stop().then(() => {
+            readerEl.classList.add("hidden");
+            btnScan.innerText = "🔄 Αλλαγή Εμπόρου (Ξανά Σκανάρισμα)";
+          });
+        }
+      },
+      () => {}
+    );
+  } catch (err) {
+    console.error("Camera error:", err);
+    alert("Δεν δόθηκε πρόσβαση στην κάμερα.");
+    readerEl.classList.add("hidden");
+    btnScan.innerText = "📷 Σκανάρισμα QR για Πληρωμή";
+  }
+}
+
+// ==========================================
+// 6. ΕΚΤΕΛΕΣΗ ΠΛΗΡΩΜΗΣ (ON-CHAIN TRANSFER)
 // ==========================================
 async function sendTransfer() {
-  const recipient = document.getElementById("transferRecipient").value.trim();
   const amount = document.getElementById("transferAmount").value;
   const btn = document.getElementById("btnTransfer");
 
-  if (!recipient || !recipient.startsWith("0x") || recipient.length !== 42) {
-    alert("Παρακαλώ εισάγετε έγκυρη διεύθυνση παραλήπτη (0x...)!");
+  if (!targetMerchantAddress) {
+    alert("Σκανάρετε πρώτα το QR του εμπόρου!");
     return;
   }
 
@@ -128,36 +154,35 @@ async function sendTransfer() {
   btn.innerText = "⏳ Εκτέλεση Πληρωμής...";
 
   try {
-    const provider = new ethers.JsonRpcProvider(RPC_ENDPOINTS[0]);
-    
-    // Έλεγχος αν έχει ETH για Gas πριν σταλεί η συναλλαγή
-    const ethBal = await provider.getBalance(citizenWallet.address);
-    if (ethBal === 0n) {
-      throw new Error("Το πορτοφόλι σας δεν έχει Sepolia ETH για το κόστος του Gas!");
-    }
-
+    const provider = new ethers.JsonRpcProvider(RPC_URL);
     const signer = citizenWallet.connect(provider);
     const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
 
     const amountWei = ethers.parseEther(amount.toString());
-    const tx = await contract.transfer(recipient, amountWei);
+    const tx = await contract.transfer(targetMerchantAddress, amountWei);
 
-    console.log("Tx Hash:", tx.hash);
     await tx.wait();
 
-    alert(`🎉 Η πληρωμή ${amount} GRC ολοκληρώθηκε επιτυχώς!`);
+    alert(`🎉 Επιτυχής πληρωμή ${amount} GRC!`);
+    
+    // Καθαρισμός UI μετά την πληρωμή
+    document.getElementById("transferAmount").value = "";
+    document.getElementById("scannedMerchantCard").classList.add("hidden");
+    document.getElementById("btnScanQR").innerText = "📷 Σκανάρισμα QR για Πληρωμή";
+    targetMerchantAddress = null;
+
     refreshBalance();
   } catch (err) {
     console.error(err);
     alert(`Σφάλμα: ${err.message}`);
   } finally {
     btn.disabled = false;
-    btn.innerText = "💸 Αποστολή GRC";
+    btn.innerText = "💸 Ολοκλήρωση Πληρωμής";
   }
 }
 
 // ==========================================
-// 6. TABS
+// 7. TABS
 // ==========================================
 function showTab(tabName) {
   ['citizen', 'merchant'].forEach(t => {
