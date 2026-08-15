@@ -3,7 +3,8 @@ const solc = require("solc");
 const fs = require("fs");
 const path = require("path");
 
-const RPC_URL = "https://ethereum-sepolia-rpc.publicnode.com";
+// Σωστό RPC URL για το Base Sepolia
+const RPC_URL = "https://sepolia.base.org";
 const PRIVATE_KEY = process.env.ADMIN_PRIVATE_KEY;
 
 if (!PRIVATE_KEY) {
@@ -54,21 +55,22 @@ async function main() {
   const contractFile = output.contracts["GreenCoin.sol"]["MunicipalGreenCoin"];
   
   const balance = await provider.getBalance(wallet.address);
-  console.log("Wallet:", wallet.address, "| Balance:", ethers.formatEther(balance), "ETH");
+  console.log("Admin Wallet:", wallet.address, "| Base Sepolia Balance:", ethers.formatEther(balance), "ETH");
 
   if (balance === 0n) {
-    throw new Error("❌ Το wallet δεν έχει test-ETH!");
+    throw new Error("❌ Το wallet δεν έχει Base Sepolia ETH για gas fees!");
   }
 
-  console.log("Deploying to Base Sepolia...");
+  console.log("🚀 Deploying to Base Sepolia Network...");
   const factory = new ethers.ContractFactory(contractFile.abi, contractFile.evm.bytecode.object, wallet);
   const contract = await factory.deploy();
   await contract.waitForDeployment();
 
   const address = await contract.getAddress();
   console.log("\n==========================================");
-  console.log("🎉 CONTRACT DEPLOYED SUCCESSFULLY!");
+  console.log("🎉 CONTRACT DEPLOYED SUCCESSFULLY ON BASE SEPOLIA!");
   console.log("CONTRACT_ADDRESS =", address);
+  console.log("Explorer: https://sepolia.basescan.org/address/" + address);
   console.log("==========================================\n");
 }
 
