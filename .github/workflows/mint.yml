@@ -6,7 +6,7 @@ on:
       citizen:
         description: 'Citizen Wallet Address'
         required: true
-        default: '0x02f92abad9F3bC0305BCe712bab26c26E19A36b1'
+        default: '0x2Cf9Ba822670EC6c4b2AA04D871ceB9026aa6EB3'
       amount:
         description: 'Amount of GRC'
         required: true
