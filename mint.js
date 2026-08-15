@@ -2,7 +2,7 @@ const { ethers } = require("ethers");
 
 async function main() {
   const RPC_URL = "https://ethereum-sepolia-rpc.publicnode.com";
-const CONTRACT_ADDRESS = "0x59DdAD0414fc513524b1d15871F744C9987A855E";
+  const CONTRACT_ADDRESS = "0x59DdAD0414fc513524b1d15871F744C9987A855E";
 
   const privateKey = process.env.ADMIN_PRIVATE_KEY;
   const citizenAddress = process.env.CITIZEN_ADDRESS;
@@ -24,15 +24,15 @@ const CONTRACT_ADDRESS = "0x59DdAD0414fc513524b1d15871F744C9987A855E";
   ];
   const contract = new ethers.Contract(CONTRACT_ADDRESS, abi, wallet);
 
-  console.log(`🚀 [Base Sepolia] Πίστωση ${amountToMint} GRC στον πολίτη: ${citizenAddress}`);
+  console.log(`🚀 [Ethereum Sepolia] Πίστωση ${amountToMint} GRC στον πολίτη: ${citizenAddress}`);
 
   const amountWei = ethers.parseEther(amountToMint.toString());
   const tx = await contract.rewardRecycling(citizenAddress, amountWei);
   console.log("Tx sent! Hash:", tx.hash);
-  console.log(`Explorer: https://sepolia.basescan.org/tx/${tx.hash}`);
+  console.log(`Explorer: https://sepolia.etherscan.io/tx/${tx.hash}`);
 
   await tx.wait();
-  console.log("✅ Minting ολοκληρώθηκε επιτυχώς στο Base Sepolia!");
+  console.log("✅ Minting ολοκληρώθηκε επιτυχώς στο Ethereum Sepolia!");
 }
 
 main().catch((err) => {
